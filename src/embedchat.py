@@ -1,12 +1,16 @@
+from .config import openaiapi, pinecone_api_key, pinecone_environment
 import re
 import pickle
 import pinecone
 import openai
 import os
-from config import openai_API_KEY, pinecone_api_key, pinecone_environment
+import sys
+
+print(os.getcwd())
+print(sys.path)
 
 
-openai.api_key = openai_API_KEY
+openai.api_key = openaiapi
 
 
 def split_text(text):
@@ -157,7 +161,7 @@ def process_extracted_text(query, text, pdf_path, search_scope='current_file', n
     write_chunks_to_file(texts, pdf_path)
 
     # initialising the openai api key
-    openai.api_key = os.environ["OpenaiAPI"]
+
     model_engine = "text-embedding-ada-002"
 
     # initialising pinecone
