@@ -3,12 +3,18 @@ from flask import Flask, request, render_template, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 from src.main_app import process_pdf_and_query as main
 from src.main_app import chat_with_model
+import logging
 
 UPLOAD_FOLDER = 'files'
 ALLOWED_EXTENSIONS = {'pdf'}
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def create_directory_if_not_exists(directory):
@@ -22,12 +28,12 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    logger.info('Index route called')
     if request.method == 'POST':
-        # Check if the post request has the file part
+        logger.info('Index route: POST request')
         if 'pdf' not in request.files:
             return redirect(request.url)
         file = request.files['pdf']
-        # If the user does not select a file, the browser submits an empty file.
         if file.filename == '':
             return redirect(request.url)
         if file and allowed_file(file.filename):
@@ -35,20 +41,20 @@ def index():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             query = request.form['query']
-            search_scope = request.form['search_scope']  # Add this line
+            search_scope = request.form['search_scope']
             department = request.form.get('department')
             type_of_document = request.form.get('type_of_document')
             year = request.form.get('year')
             answer, search_results = main(
                 pdf_path, query, search_scope, department, type_of_document, year)
-            os.remove(pdf_path)  # Delete the PDF file after processing
-            # Redirect to the result route
+            os.remove(pdf_path)
             return redirect(url_for('result', answer=answer, search_results=search_results))
     return render_template('index.html')
 
 
 @app.route('/result')
 def result():
+    logger.info('Result route called')
     answer = request.args.get('answer', '')
     search_results = request.args.get('search_results', '')
     return render_template('results.html', answer=answer, search_results=search_results)
@@ -56,6 +62,7 @@ def result():
 
 @app.route('/chat', methods=['POST'])
 def chat():
+    logger.info('Chat route called')
     if request.method == 'POST':
         query = request.form['query']
         context = request.form['context']
