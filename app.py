@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from src.main_app import process_pdf_and_query as main
 from src.main_app import chat_with_model
 import logging
+from logging.handlers import RotatingFileHandler
 
 UPLOAD_FOLDER = 'files'
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -71,4 +72,7 @@ def chat():
 
 
 if __name__ == '__main__':
+    handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
     app.run(debug=True)
