@@ -1,4 +1,4 @@
-from .config import openaiapi, pinecone_api_key, pinecone_environment
+# from .config import openaiapi, pinecone_api_key, pinecone_environment
 import re
 import pickle
 import pinecone
@@ -9,6 +9,9 @@ import sys
 print(os.getcwd())
 print(sys.path)
 
+openaiapi = os.environ["OPENAI_API_KEY"]
+pinecone_api_key = os.environ["PINECONE_API_KEY"]
+pinecone_environment = os.environ["PINECONE_ENVIRONMENT"]
 
 openai.api_key = openaiapi
 
