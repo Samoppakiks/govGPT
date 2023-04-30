@@ -11,14 +11,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-      function onSubmit() {
-        document.getElementById('submit-button').style.backgroundColor =
-          'mediumgray';
-        document.getElementById('processing').style.display = 'block';
-        return true;
-      }
-    </script>
+
     <style>
       html {
         height: 100%;
@@ -64,7 +57,7 @@
       }
 
       h1 {
-        font-size: 2.2rem;
+        font-size: 2.7rem;
         font-weight: bold;
         margin-bottom: 2rem;
       }
@@ -87,23 +80,67 @@
       .year-input {
         margin-top: 5px;
       }
+
+      .select-existing {
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+
+      .or {
+        font-weight: bold;
+        margin: 10px 0;
+      }
+
+      select,
+      select:focus {
+        background: #ece7e7;
+        border: 1px solid #7b7878;
+        color: rgb(12, 12, 12);
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="pt-3 text-center">
-        <h1>Upload PDF and Input Query</h1>
+        <h1>QUERY YOUR DOCUMENTS</h1>
         <form
           action="/"
           method="POST"
           enctype="multipart/form-data"
           onsubmit="return onSubmit();"
         >
-          <input type="file" name="pdf" accept=".pdf" required />
+          <label for="namespace" class="select-existing"
+            >Select from existing:</label
+          >
+          <select name="namespace" id="namespace" ;>
+            {% for namespace in namespaces %}
+            <option value="{{ namespace }}">{{ namespace }}</option>
+            {% endfor %}
+          </select>
           <br /><br />
-          <label for="query">Query:</label>
-          <input type="text" name="query" id="query" required />
+
+          <div class="or">OR</div>
+          <br />
+
+          <button
+            type="button"
+            id="upload-new-file-btn"
+            class="btn btn-light ml-2"
+          >
+            Upload New File
+          </button>
           <br /><br />
+
+          <input
+            type="file"
+            name="pdf"
+            id="file-input"
+            accept=".pdf"
+            disabled
+            required
+          />
+          <br /><br />
+
           <div class="row">
             <div class="col">
               <label for="department">Department (optional):</label>
@@ -112,6 +149,7 @@
                 name="department"
                 id="department"
                 class="form-control"
+                disabled
               />
             </div>
             <div class="col">
@@ -121,6 +159,7 @@
                 name="type_of_document"
                 id="type_of_document"
                 class="form-control"
+                disabled
               />
             </div>
             <div class="col">
@@ -133,16 +172,23 @@
                 max="2099"
                 step="1"
                 class="form-control year-input"
+                disabled
               />
             </div>
           </div>
           <br /><br />
+
+          <label for="query">Query:</label>
+          <input type="text" name="query" id="query" required />
+          <br /><br />
+
           <label for="search_scope">Search Scope:</label>
           <select name="search_scope" id="search_scope">
             <option value="current_file">Current File</option>
             <option value="entire_database">Entire Database</option>
           </select>
           <br /><br />
+
           <input
             id="submit-button"
             type="submit"
@@ -157,9 +203,40 @@
       </div>
     </div>
     <script>
-      document
-        .getElementById('submit-button')
-        .addEventListener('click', onSubmit);
+      function onSubmit() {
+        document.getElementById('submit-button').style.backgroundColor =
+          'mediumgray';
+        document.getElementById('processing').style.display = 'block';
+        return true;
+      }
+
+      function setUploadFieldsState(isUploadNewFile) {
+        document.getElementById('file-input').disabled = !isUploadNewFile;
+        document.getElementById('file-input').required = isUploadNewFile;
+        document.getElementById('department').disabled = !isUploadNewFile;
+        document.getElementById('type_of_document').disabled = !isUploadNewFile;
+        document.getElementById('year').disabled = !isUploadNewFile;
+      }
+
+      function handleNamespaceChange() {
+        setUploadFieldsState(false);
+      }
+
+      function handleUploadNewFileButtonClick() {
+        setUploadFieldsState(true);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        handleNamespaceChange();
+
+        document
+          .getElementById('submit-button')
+          .addEventListener('click', onSubmit);
+
+        document
+          .getElementById('upload-new-file-btn')
+          .addEventListener('click', handleUploadNewFileButtonClick);
+      });
     </script>
   </body>
 </html>
