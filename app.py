@@ -26,7 +26,8 @@ def index():
     if request.method == 'POST':
         query = request.form['query']
         search_scope = request.form['search_scope']
-        namespace = request.form['namespace']
+        namespace = request.form['namespace'] if not request.form.get(
+            'namespace-disabled', 'false') == 'true' else None
 
         print(f"Query: {query}")
         print(f"Search scope: {search_scope}")

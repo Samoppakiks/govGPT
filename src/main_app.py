@@ -49,7 +49,7 @@ def process_pdf_and_query(query, search_scope='current_file', pdf_path=None, nam
         else:
             extracted_text = extract_text_from_pdf(pdf_path)
     elif namespace:
-        txt_file_path = f"./chunks/{namespace}_chunks.txt"
+        txt_file_path = f"./extracted_texts/{namespace}.txt"
         if os.path.exists(txt_file_path):
             extracted_text = read_extracted_text(txt_file_path)
         else:

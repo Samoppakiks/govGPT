@@ -13,7 +13,7 @@ openai.api_key = openaiapi
 openai.organization = openaiorg
 
 
-def split_text(text, max_chunk_size=300, overlap=50):
+def split_sections(text):
     # Split the text into sections based on rule numbers
     pattern = r'(\d+\.\s*\w*\.?)'
     sections = re.split(pattern, text)
@@ -22,9 +22,12 @@ def split_text(text, max_chunk_size=300, overlap=50):
     for i in range(0, len(sections)-1, 2):
         combined_sections.append(sections[i] + sections[i+1])
 
-    # Process each section
+    return combined_sections
+
+
+def split_chunks(sections, max_chunk_size=300, overlap=50):
     chunks = []
-    for section in combined_sections:
+    for section in sections:
         section = section.replace('\n', ' ').strip()
         section_length = len(section)
 
@@ -46,6 +49,12 @@ def split_text(text, max_chunk_size=300, overlap=50):
 
     total_chunks = len(chunks)
     print(f"Total number of chunks created: {total_chunks}")
+    return chunks
+
+
+def split_text(text, max_chunk_size=300, overlap=50):
+    sections = split_sections(text)
+    chunks = split_chunks(sections, max_chunk_size, overlap)
     return chunks
 
 

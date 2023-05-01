@@ -117,6 +117,13 @@
             <option value="{{ namespace }}">{{ namespace }}</option>
             {% endfor %}
           </select>
+          <input
+            type="hidden"
+            name="namespace-disabled"
+            id="namespace-disabled"
+            value="false"
+          />
+
           <br /><br />
 
           <div class="or">OR</div>
@@ -219,10 +226,14 @@
       }
 
       function handleNamespaceChange() {
+        document.getElementById('namespace-disabled').value = 'false';
         setUploadFieldsState(false);
       }
 
       function handleUploadNewFileButtonClick() {
+        const namespaceElement = document.getElementById('namespace');
+        namespaceElement.disabled = true;
+        document.getElementById('namespace-disabled').value = 'true';
         setUploadFieldsState(true);
       }
 
@@ -236,6 +247,10 @@
         document
           .getElementById('upload-new-file-btn')
           .addEventListener('click', handleUploadNewFileButtonClick);
+
+        document
+          .getElementById('namespace')
+          .addEventListener('change', handleNamespaceChange);
       });
     </script>
   </body>
