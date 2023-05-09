@@ -59,6 +59,7 @@ def clean_and_split_text(text):
             cleaned_segments.extend(split_chunks)
         else:
             cleaned_segments.append(segment)
+    cleaned_segments = [segment for segment in cleaned_segments if segment.strip()]
     return cleaned_segments
 
 
