@@ -7,8 +7,10 @@ print(sys.executable)"""
 """import pinecone
 import requests
 
-pinecone.init(api_key='6d0b2d52-99bc-4de5-bec0-0c157c66ecbd',
-              environment='northamerica-northeast1-gcp')
+pinecone.init(
+    api_key="6d0b2d52-99bc-4de5-bec0-0c157c66ecbd",
+    environment="northamerica-northeast1-gcp",
+)
 
 
 def get_pinecone_namespaces():
@@ -16,7 +18,7 @@ def get_pinecone_namespaces():
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "Api-Key": "6d0b2d52-99bc-4de5-bec0-0c157c66ecbd"
+        "Api-Key": "6d0b2d52-99bc-4de5-bec0-0c157c66ecbd",
     }
     response = requests.get(url, headers=headers)
     print("Server response:", response.text)
@@ -33,11 +35,13 @@ for idx, namespace in enumerate(namespaces_list):
     print(f"{idx}: {namespace}")
 
 
-index_name = 'rajgov'
+index_name = "rajgov"
 index = pinecone.Index(index_name)
 
 delete_response_namespace_1 = index.delete(
-    delete_all=True, namespace='IASCadreRules1954_NLTK')
+    delete_all=True,
+    namespace="201901240328415358086002-2-1-dop-a-2-acr-91dated24-1-2019",
+)
 print("Deletion response for namespace 1:", delete_response_namespace_1)
 
 
