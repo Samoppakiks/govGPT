@@ -4,12 +4,15 @@ print(sys.executable)"""
 
 
 # Uncomment this to delete namespaces
+"""pinecone_api_key = os.environ.get("PINECONE_API_KEY")
+pinecone_environment = os.environ.get("PINECONE_ENV")"""
+
 """import pinecone
 import requests
 
 pinecone.init(
-    api_key="6d0b2d52-99bc-4de5-bec0-0c157c66ecbd",
-    environment="northamerica-northeast1-gcp",
+    api_key=pinecone_api_key,
+    environment=pinecone_environment,
 )
 
 
@@ -18,7 +21,7 @@ def get_pinecone_namespaces():
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "Api-Key": "6d0b2d52-99bc-4de5-bec0-0c157c66ecbd",
+        "Api-Key": pinecone_api_key,
     }
     response = requests.get(url, headers=headers)
     print("Server response:", response.text)

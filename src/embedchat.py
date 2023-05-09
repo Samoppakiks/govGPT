@@ -1,4 +1,4 @@
-# from .config import openaiapi, openaiorg
+# from .config import openaiapi, openaiorg, pinecone_api_key, pinecone_environment
 import os
 import openai
 import pinecone
@@ -12,6 +12,8 @@ from spacy.lang.en import English
 
 openaiapi = os.environ.get("OPENAI_API_KEY")
 openaiorg = os.environ.get("OPENAI_ORG_ID")
+pinecone_api_key = os.environ.get("PINECONE_API_KEY")
+pinecone_environment = os.environ.get("PINECONE_ENV")
 
 openai.api_key = openaiapi
 openai.organization = openaiorg
@@ -110,8 +112,8 @@ def process_extracted_text(
 
     # initialising pinecone
     pinecone.init(
-        api_key="6d0b2d52-99bc-4de5-bec0-0c157c66ecbd",
-        environment="northamerica-northeast1-gcp",
+        api_key=pinecone_api_key,
+        environment=pinecone_environment,
     )
 
     # fetching the name of the created index and initialising it
