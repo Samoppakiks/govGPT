@@ -1,4 +1,4 @@
-from .config import openaiapi, openaiorg
+# from .config import openaiapi, openaiorg
 import os
 import openai
 import pinecone
@@ -8,6 +8,10 @@ import re
 import json
 import time
 from spacy.lang.en import English
+
+
+openaiapi = os.environ.get("OPENAI_API_KEY")
+openaiorg = os.environ.get("OPENAI_ORG_ID")
 
 openai.api_key = openaiapi
 openai.organization = openaiorg
