@@ -4,113 +4,92 @@ import openai
 import pinecone
 import pickle
 import re
-from nltk.tokenize import sent_tokenize
-import nltk
-nltk.download('punkt')
-
+import re
+import json
+import time
+from spacy.lang.en import English
 
 openai.api_key = openaiapi
 openai.organization = openaiorg
 
-
-def split_sections(text):
-    # Split the text into sections based on rule numbers
-    pattern = r'(\d+\.\s*\w*\.?)'
-    sections = re.split(pattern, text)
-
-    combined_sections = []
-    for i in range(0, len(sections)-1, 2):
-        combined_sections.append(sections[i] + sections[i+1])
-
-    return combined_sections
+nlp = English()  # Just the language with no model
+nlp.add_pipe("sentencizer")  # Adding a sentencizer pipeline component
 
 
-def split_chunks(sections, max_chunk_size=300, overlap=50):
+def split_sentences(text):
+    doc = nlp(text)
+    return [sent.text for sent in doc.sents]
+
+
+def split_into_chunks(text, max_len=800):
+    sentences = split_sentences(text)
     chunks = []
-    for section in sections:
-        section = section.replace('\n', ' ').strip()
-        section_length = len(section)
-
-        if section_length <= max_chunk_size:
-            # If the section fits into the max_chunk_size, keep it as it is
-            chunks.append(section)
+    current_chunk = ""
+    for sentence in sentences:
+        if len(current_chunk) + len(sentence) <= max_len:
+            current_chunk += sentence
         else:
-            # If the section is too big, split it into smaller chunks based on sentences
-            sentences = sent_tokenize(section)
-            tokens = []
-            for sentence in sentences:
-                tokens.extend(sentence.split())
+            chunks.append(current_chunk.strip())
+            current_chunk = sentence
 
-            for i in range(0, len(tokens), max_chunk_size - overlap):
-                start = max(0, i - overlap) if i > 0 else i
-                end = min(i + max_chunk_size, len(tokens))
-                small_chunk = ' '.join(tokens[start:end])
-                chunks.append(small_chunk)
-
-    total_chunks = len(chunks)
-    print(f"Total number of chunks created: {total_chunks}")
+    if current_chunk.strip():
+        chunks.append(current_chunk.strip())
     return chunks
 
 
-def split_text(text, max_chunk_size=300, overlap=50):
-    sections = split_sections(text)
-    chunks = split_chunks(sections, max_chunk_size, overlap)
-    return chunks
+def clean_and_split_text(text):
+    # Remove extra newline characters and join the text
+    text = " ".join(text.strip().split("\n"))
+    # Remove page numbers
+    text = re.sub(r"\d+\n", "", text)
+    # Remove citations
+    # text = re.sub(r"(?:\*\s*[A-Za-z\d*]+\s*vide[^“]*?(?:\n|$))", "", text)
+    # Identify rule titles and add a separator before them
+    text = re.sub(r"(\d+(\.|\')\.?\s[^—]+[,—])", r"@@@\1", text)
+    # Split the text based on the separator
+    segments = text.split("@@@")
+    # Create a list to store the cleaned segments
+    cleaned_segments = []
+    for segment in segments:
+        # Only remove extra spaces and newline characters
+        segment = re.sub(r"\s+", " ", segment).strip()
 
-
-"""def split_text(text, max_chunk_size=300, overlap=50):
-    # Split the text into sections based on rule numbers
-    pattern = r'(\d+\.\s*\w*\.?)'
-    sections = re.split(pattern, text)
-
-    combined_sections = []
-    for i in range(0, len(sections)-1, 2):
-        combined_sections.append(sections[i] + sections[i+1])
-
-    # Process each section
-    chunks = []
-    for section in combined_sections:
-        section = section.replace('\n', ' ').strip()
-        section_length = len(section)
-
-        if section_length <= max_chunk_size:
-            # If the section fits into the max_chunk_size, keep it as it is
-            chunks.append(section)
+        if len(segment) > 800:
+            split_chunks = split_into_chunks(segment)
+            cleaned_segments.extend(split_chunks)
         else:
-            # If the section is too big, split it into smaller chunks
-            tokens = section.split()
-            for i in range(0, len(tokens), max_chunk_size - overlap):
-                start = max(0, i - overlap) if i > 0 else i
-                end = min(i + max_chunk_size, len(tokens))
-                small_chunk = ' '.join(tokens[start:end])
-                chunks.append(small_chunk)
-
-    total_chunks = len(chunks)
-    print(f"Total number of chunks created: {total_chunks}")
-    return chunks"""
+            cleaned_segments.append(segment)
+    return cleaned_segments
 
 
 def write_chunks_to_file(chunks, pdf_path, namespace=None):
     # Create a 'chunks' directory if it doesn't exist
-    if not os.path.exists('chunks'):
-        os.makedirs('chunks')
-
+    if not os.path.exists("chunks"):
+        os.makedirs("chunks")
     # Set the output file name using the original PDF filename
     if pdf_path:
         output_filename = os.path.splitext(os.path.basename(pdf_path))[0]
     else:
         output_filename = namespace
     output_file_path = f"./chunks/{output_filename}_chunks.txt"
-
     # Write the chunks to the output file
-    with open(output_file_path, 'w') as f:
+    with open(output_file_path, "w") as f:
         for idx, chunk in enumerate(chunks, start=1):
             f.write(f"Chunk {idx}:\n")
             f.write(chunk)
             f.write("\n\n")
 
 
-def process_extracted_text(query, text, pdf_path, search_scope='current_file', namespace=None, department=None, type_of_document=None, year=None):
+def process_extracted_text(
+    query,
+    text,
+    pdf_path,
+    search_scope="current_file",
+    namespace=None,
+    department=None,
+    type_of_document=None,
+    year=None,
+):
     # selecting the huggingface tokeniser and selecting the chunk sizes
 
     texts = []
@@ -118,21 +97,20 @@ def process_extracted_text(query, text, pdf_path, search_scope='current_file', n
     # overlap = 100
 
     # splitting the text into chunks using our custom function
-    texts = split_text(text)
+    texts = clean_and_split_text(text)
     write_chunks_to_file(texts, pdf_path, namespace)
 
     # initialising the openai api key
-    openai.api_key = os.environ["OpenaiAPI"]
     model_engine = "text-embedding-ada-002"
 
     # initialising pinecone
     pinecone.init(
-        api_key='6d0b2d52-99bc-4de5-bec0-0c157c66ecbd',
-        environment='northamerica-northeast1-gcp'
+        api_key="6d0b2d52-99bc-4de5-bec0-0c157c66ecbd",
+        environment="northamerica-northeast1-gcp",
     )
 
     # fetching the name of the created index and initialising it
-    index_name = 'rajgov'
+    index_name = "rajgov"
     index = pinecone.Index(index_name)
 
     # creating embeddings of chunks and uploading them into the index
@@ -150,8 +128,7 @@ def process_extracted_text(query, text, pdf_path, search_scope='current_file', n
     if not os.path.exists(embeddings_file_path):
         # creating embeddings of chunks and save them to a file
         for i, chunk in enumerate(texts):
-            response = openai.Embedding.create(
-                input=[chunk], model=model_engine)
+            response = openai.Embedding.create(input=[chunk], model=model_engine)
             embedding = response["data"][0]["embedding"]
             metadata = {"text": chunk}
             if department is not None:
@@ -163,13 +140,13 @@ def process_extracted_text(query, text, pdf_path, search_scope='current_file', n
             embeddings.append((f"chunk_{i}", embedding, metadata))
 
             with open(embeddings_file_path, "ab") as f:
-                print(
-                    f"Saving embeddings of chunk_{i} to {embeddings_file_path}")
+                print(f"Saving embeddings of chunk_{i} to {embeddings_file_path}")
                 pickle.dump([(f"chunk_{i}", embedding, metadata)], f)
 
             # Upserting embeddings to namespace
             index.upsert(
-                vectors=[(f"chunk_{i}", embedding, metadata)], namespace=namespace)
+                vectors=[(f"chunk_{i}", embedding, metadata)], namespace=namespace
+            )
     else:
         # load embeddings from the file
         with open(embeddings_file_path, "rb") as f:
@@ -185,8 +162,7 @@ def process_extracted_text(query, text, pdf_path, search_scope='current_file', n
 
         # Continue creating embeddings from where it left off
         for i, chunk in enumerate(texts[completed_chunks:], start=completed_chunks):
-            response = openai.Embedding.create(
-                input=[chunk], model=model_engine)
+            response = openai.Embedding.create(input=[chunk], model=model_engine)
             embedding = response["data"][0]["embedding"]
             metadata = {"text": chunk}
             if department is not None:
@@ -198,13 +174,13 @@ def process_extracted_text(query, text, pdf_path, search_scope='current_file', n
             embeddings.append((f"chunk_{i}", embedding, metadata))
 
             with open(embeddings_file_path, "ab") as f:
-                print(
-                    f"Saving embeddings of chunk_{i} to {embeddings_file_path}")
+                print(f"Saving embeddings of chunk_{i} to {embeddings_file_path}")
                 pickle.dump([(f"chunk_{i}", embedding, metadata)], f)
 
             # Upserting embeddings to namespace
             index.upsert(
-                vectors=[(f"chunk_{i}", embedding, metadata)], namespace=namespace)
+                vectors=[(f"chunk_{i}", embedding, metadata)], namespace=namespace
+            )
 
     # preparing the query
     """query = translate_to_english_chatgpt(query)
@@ -212,21 +188,24 @@ def process_extracted_text(query, text, pdf_path, search_scope='current_file', n
     print(f"QUERY: {query}")"""
 
     # querying the index
-    query_response = openai.Embedding.create(
-        input=[query], model=model_engine)
+    query_response = openai.Embedding.create(input=[query], model=model_engine)
     query_embedding = query_response["data"][0]["embedding"]
 
     # the response will be in json with id, metadata with text, and score
-    if search_scope == 'current_file':
-        results = index.query(queries=[query_embedding],
-                              top_k=5, include_metadata=True, namespace=namespace)
+    if search_scope == "current_file":
+        results = index.query(
+            queries=[query_embedding],
+            top_k=5,
+            include_metadata=True,
+            namespace=namespace,
+        )
     else:  # search_scope == 'entire_database'
-        results = index.query(queries=[query_embedding],
-                              top_k=5, include_metadata=True)
+        results = index.query(queries=[query_embedding], top_k=5, include_metadata=True)
     print(results)
 
     answer, search_results = chatgpt_summarize_results(
-        query, results)  # focus_phrases,)
+        query, results
+    )  # focus_phrases,)
 
     return answer, search_results
 
@@ -242,13 +221,18 @@ def chatgpt_summarize_results(query, results):  # focus_phrases)
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant working at a government help center facilities. People ask you questions related to permissable activities,and  for information on government services."},
-            {"role": "user", "content": f"The query is: '{query}'. Based on the following search results, provide an answer to the query, after considering each result with respect to the query and checking if anything related to the query can be inferred from each result. Finally, comment on reason for your final interpreation, as well as any additional information that may not be contained in the text that may help answer the query. considering not only exact matches but also possible inferences about the expected action that can be made based on the results. :\n\n{search_results}"  # You may also use the focus phrases : {focus_phrases} for better inference.
-             }
-        ]
+            {
+                "role": "system",
+                "content": "You are a helpful assistant working at a government help center facilities. People ask you questions related to permissable activities,and  for information on government services.",
+            },
+            {
+                "role": "user",
+                "content": f"The query is: '{query}'. Based on the following search results, provide an answer to the query, after considering each result with respect to the query and checking if anything related to the query can be inferred from each result. Finally, comment on reason for your final interpreation, as well as any additional information that may not be contained in the text that may help answer the query. considering not only exact matches but also possible inferences about the expected action that can be made based on the results. :\n\n{search_results}",  # You may also use the focus phrases : {focus_phrases} for better inference.
+            },
+        ],
     )
 
-    gpt_response = response.choices[0].message['content'].strip()
+    gpt_response = response.choices[0].message["content"].strip()
 
     return gpt_response, search_results
 
@@ -257,13 +241,16 @@ def chatgpt_get_response(context, query):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant working at a government help center facilities. People ask you questions related to permissable activities, and for information on government services."},
+            {
+                "role": "system",
+                "content": "You are a helpful assistant working at a government help center facilities. People ask you questions related to permissable activities, and for information on government services.",
+            },
             {"role": "user", "content": context},
-            {"role": "user", "content": query}
-        ]
+            {"role": "user", "content": query},
+        ],
     )
 
-    return response.choices[0].message['content'].strip()
+    return response.choices[0].message["content"].strip()
 
 
 # just as an aside, the following prompts gave 2 different results when run twice, without making any change to

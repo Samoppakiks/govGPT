@@ -31,5 +31,9 @@
     ".vscode{,/**}"
   ],
   "appService.defaultWebAppToDeploy": "/subscriptions/b73a420e-57f6-4644-94ce-d87227235673/resourceGroups/rg-pdfchat/providers/Microsoft.Web/sites/govGPT",
-  "appService.deploySubpath": "."
+  "appService.deploySubpath": ".",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.formatting.provider": "none"
 }
