@@ -189,11 +189,6 @@ def process_extracted_text(
                 vectors=[(f"chunk_{i}", embedding, metadata)], namespace=namespace
             )
 
-    # preparing the query
-    """query = translate_to_english_chatgpt(query)
-    focus_phrases = extract_focus_phrases(query)
-    print(f"QUERY: {query}")"""
-
     # querying the index
     query_response = openai.Embedding.create(input=[query], model=model_engine)
     query_embedding = query_response["data"][0]["embedding"]
@@ -209,15 +204,6 @@ def process_extracted_text(
     else:  # search_scope == 'entire_database'
         results = index.query(queries=[query_embedding], top_k=5, include_metadata=True)
     print(results)
-
-    answer, search_results = chatgpt_summarize_results(
-        query, results
-    )  # focus_phrases,)
-
-    return answer, search_results
-
-
-def chatgpt_summarize_results(query, results):  # focus_phrases)
     search_results = ""
     for match in results["results"][0]["matches"]:
         score = match["score"]
@@ -225,23 +211,25 @@ def chatgpt_summarize_results(query, results):  # focus_phrases)
         search_results += f"{score:.2f}: {text}\n"
     print(search_results)
 
+    return search_results
+
+
+def chatgpt_summarize_results(query, search_results):  # focus_phrases)
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {
                 "role": "system",
-                "content": "You are a helpful assistant working at a government help center facilities. People ask you questions related to permissable activities,and  for information on government services.",
+                "content": "You are a helpful assistant working at a government help centre facilities. People ask you questions related to permissible activities,and  for information on government services.",
             },
             {
                 "role": "user",
-                "content": f"The query is: '{query}'. Based on the following search results, provide an answer to the query, after considering each result with respect to the query and checking if anything related to the query can be inferred from each result. Finally, comment on reason for your final interpreation, as well as any additional information that may not be contained in the text that may help answer the query. considering not only exact matches but also possible inferences about the expected action that can be made based on the results. :\n\n{search_results}",  # You may also use the focus phrases : {focus_phrases} for better inference.
+                "content": f"The query is: '{query}'. Based on the following search results, provide an answer to the query, after considering each result with respect to the query and checking if anything related to the query can be inferred from each result. Finally, comment on reason for your final interpreation, as well as any additional information that may not be contained in the text that may help answer the query. considering not only exact matches but also possible inferences about the expected action that can be made based on the results. :\n\n{search_results}",
             },
         ],
     )
-
     gpt_response = response.choices[0].message["content"].strip()
-
-    return gpt_response, search_results
+    return gpt_response
 
 
 def chatgpt_get_response(context, query):

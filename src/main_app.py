@@ -3,6 +3,7 @@ from .pdftext import extract_text_from_pdf
 from .embedchat import process_extracted_text
 import pickle
 from .embedchat import chatgpt_get_response
+from .embedchat import chatgpt_summarize_results
 import requests
 
 # from .config import pinecone_api_key, pinecone_environment
@@ -71,7 +72,7 @@ def process_pdf_and_query(
     else:
         extracted_text = ""
 
-    answer, search_results = process_extracted_text(
+    search_results = process_extracted_text(
         query,
         extracted_text,
         pdf_path,
@@ -81,7 +82,12 @@ def process_pdf_and_query(
         year=year,
         namespace=namespace,
     )
-    return answer, search_results
+    return search_results
+
+
+def generate_answer(query, search_results):
+    answer = chatgpt_summarize_results(query, search_results)
+    return answer
 
 
 if __name__ == "__main__":
