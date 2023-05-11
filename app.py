@@ -122,6 +122,7 @@ def get_answer():
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_message = f"Timestamp: {timestamp}, Query: {query}, Search scope: {search_scope}, Namespace: {namespace}, PDF Path: {pdf_path}, Department: {department}, Type of Document: {type_of_document}, Year: {year}, Answer: {answer}, Search Results: {search_results}"
     logger.info(log_message)
+    print(f"Generated answer: {answer}")
     emit("answer_ready", {"answer": answer})
 
 
