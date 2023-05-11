@@ -5,10 +5,10 @@ import pickle
 from .embedchat import chatgpt_get_response
 import requests
 
-from .config import pinecone_api_key, pinecone_environment
+# from .config import pinecone_api_key, pinecone_environment
 
-"""pinecone_api_key = os.environ.get("PINECONE_API_KEY")
-pinecone_environment = os.environ.get("PINECONE_ENV")"""
+pinecone_api_key = os.environ.get("PINECONE_API_KEY")
+pinecone_environment = os.environ.get("PINECONE_ENV")
 
 
 def get_pinecone_namespaces():
