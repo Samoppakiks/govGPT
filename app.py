@@ -76,7 +76,9 @@ def index():
             os.remove(pdf_path)  # Delete the PDF file after processing
 
         # Redirect to the result route
-        return redirect(url_for("result", answer=answer, search_results=search_results))
+        return redirect(
+            url_for("result", query=query, answer=answer, search_results=search_results)
+        )
 
     # Fetch the namespaces outside the POST check
     namespaces = get_pinecone_namespaces()
@@ -85,9 +87,12 @@ def index():
 
 @app.route("/result")
 def result():
+    query = request.args.get("query", "")
     answer = request.args.get("answer", "")
     search_results = request.args.get("search_results", "")
-    return render_template("results.html", answer=answer, search_results=search_results)
+    return render_template(
+        "results.html", query=query, answer=answer, search_results=search_results
+    )
 
 
 @app.route("/chat", methods=["POST"])
