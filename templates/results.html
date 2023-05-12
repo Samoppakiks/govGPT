@@ -14,8 +14,14 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
           const namespace = '/results';
-          const socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace, {transports: ['websocket']});
-        ;
+          const socketUrl = location.protocol + '//' + document.domain + ':' + location.port + namespace; //{transports: ['websocket']}//
+          const socket = io.connect(socketUrl, { transports: ["websocket"] });
+
+          console.log("Socket.IO URL:", socketUrl);
+
+          socket.on("connect_error", (err) => {
+            console.log("Socket.IO error:", err);
+          });
 
           let loadingText = "GPT is reading";
           let toggle = true;
