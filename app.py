@@ -14,6 +14,16 @@ import time
 from datetime import datetime
 
 # Configure logger
+
+
+logging.basicConfig(level=logging.DEBUG)
+
+app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Add this line to log a message when the app starts.
+app.logger.info("App started")
+
 logger = logging.getLogger("govGPT_usage")
 logger.setLevel(logging.INFO)
 
@@ -26,10 +36,9 @@ logger.addHandler(file_handler)
 UPLOAD_FOLDER = "files"
 ALLOWED_EXTENSIONS = {"pdf"}
 
-app = Flask(__name__)
+
 app.secret_key = os.urandom(24)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-socketio = SocketIO(app)
 
 
 def create_directory_if_not_exists(directory):
@@ -136,4 +145,4 @@ def chat():
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, host="0.0.0.0", port=5000)
+    socketio.run(app)  # debug=True, host="0.0.0.0", port=5000)
