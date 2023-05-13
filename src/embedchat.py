@@ -214,6 +214,8 @@ def process_extracted_text(
         query, results
     )  # focus_phrases,)
 
+    print(f"ANSWER: {answer}")
+
     return answer, search_results
 
 
