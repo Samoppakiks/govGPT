@@ -30,7 +30,7 @@ jobs:
           tags: mandelbrot4669/kikofiles:kiko_v1
 
       - name: 'Deploy Docker container to Azure Web App'
-        uses: azure/docker-webapp-deploy-action@v1
+        uses: azure/webapps-deploy@v2
         with:
           app-name: 'kiko'
           slot-name: 'Production'
