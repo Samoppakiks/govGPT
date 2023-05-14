@@ -18,6 +18,9 @@ RUN apt-get update && \
     apt-get install -y tesseract-ocr && \
     apt-get install -y tesseract-ocr-all
 
+# Install Poppler utils
+RUN apt-get install -y poppler-utils
+
 WORKDIR /app
 COPY . /app
 
