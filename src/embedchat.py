@@ -134,6 +134,8 @@ def process_extracted_text(
     embeddings = []
     if not os.path.exists(embeddings_file_path):
         # creating embeddings of chunks and save them to a file
+        length = len(texts)
+        print(f"Creating embeddings of {length} chunks")
         for i, chunk in enumerate(texts):
             response = openai.Embedding.create(input=[chunk], model=model_engine)
             embedding = response["data"][0]["embedding"]
@@ -147,7 +149,9 @@ def process_extracted_text(
             embeddings.append((f"chunk_{i}", embedding, metadata))
 
             with open(embeddings_file_path, "ab") as f:
-                print(f"Saving embeddings of chunk_{i} to {embeddings_file_path}")
+                print(
+                    f"Saving embeddings of chunk_{i}/{length} to {embeddings_file_path}"
+                )
                 pickle.dump([(f"chunk_{i}", embedding, metadata)], f)
 
             # Upserting embeddings to namespace

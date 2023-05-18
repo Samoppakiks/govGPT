@@ -7,7 +7,9 @@ print(sys.executable)"""
 """pinecone_api_key = os.environ.get("PINECONE_API_KEY")
 pinecone_environment = os.environ.get("PINECONE_ENV")"""
 
-"""import pinecone
+"""from config import pinecone_api_key, pinecone_environment
+
+import pinecone
 import requests
 
 pinecone.init(
@@ -43,10 +45,33 @@ index = pinecone.Index(index_name)
 
 delete_response_namespace_1 = index.delete(
     delete_all=True,
-    namespace="201901240328415358086002-2-1-dop-a-2-acr-91dated24-1-2019",
+    namespace="Rajeevika_State_Level_Federation",
 )
 print("Deletion response for namespace 1:", delete_response_namespace_1)
 
+delete_response_namespace_2 = index.delete(
+    delete_all=True,
+    namespace="CCA",
+)
+print("Deletion response for namespace 2:", delete_response_namespace_1)
+
+delete_response_namespace_3 = index.delete(
+    delete_all=True,
+    namespace="pensionrules",
+)
+print("Deletion response for namespace 3:", delete_response_namespace_1)
+
+delete_response_namespace_4 = index.delete(
+    delete_all=True,
+    namespace="statistical_mechanics",
+)
+print("Deletion response for namespace 4:", delete_response_namespace_1)
+
+delete_response_namespace_5 = index.delete(
+    delete_all=True,
+    namespace="Hossenfelder_fqxi_essay_hos",
+)
+print("Deletion response for namespace 5:", delete_response_namespace_1)
 
 namespaces_new = get_pinecone_namespaces()
 
