@@ -1,19 +1,18 @@
-# from .config import openaiapi, openaiorg, pinecone_api_key, pinecone_environment
+from .config import openaiapi, openaiorg, pinecone_api_key, pinecone_environment
 import os
 import openai
 import pinecone
 import pickle
-import re
 import re
 import json
 import time
 from spacy.lang.en import English
 
 
-openaiapi = os.environ.get("OPENAI_API_KEY")
+"""openaiapi = os.environ.get("OPENAI_API_KEY")
 openaiorg = os.environ.get("OPENAI_ORG_ID")
 pinecone_api_key = os.environ.get("PINECONE_API_KEY")
-pinecone_environment = os.environ.get("PINECONE_ENV")
+pinecone_environment = os.environ.get("PINECONE_ENV")"""
 
 openai.api_key = openaiapi
 openai.organization = openaiorg
