@@ -1,9 +1,13 @@
 import os
 from flask import Flask, request, render_template, redirect, url_for, jsonify, session
 from werkzeug.utils import secure_filename
-from src.main_app import process_pdf_and_query as main
-from src.main_app import chat_with_model
-from src.main_app import get_pinecone_namespaces
+from src.main_app import (
+    process_pdf_and_query,
+    chat_with_model,
+    get_pinecone_namespaces,
+    add_metadata,
+)
+from src.extract import chunks
 import logging
 import time
 from datetime import datetime
@@ -56,21 +60,27 @@ def index():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 pdf_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                df = chunks(pdf_path)
+                df = add_metadata(
+                    df,
+                    filename,
+                    request.form.get("department"),
+                    request.form.get("type_of_document"),
+                    request.form.get("year"),
+                )
             else:
                 pdf_path = None
+                df = None
         else:
             pdf_path = None
+            df = None
 
-        department = request.form.get("department")
-        type_of_document = request.form.get("type_of_document")
-        year = request.form.get("year")
-
-        answer, search_results = main(
-            query, search_scope, pdf_path, namespace, department, type_of_document, year
+        answer, search_results = process_pdf_and_query(
+            query, df, search_scope, namespace
         )
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        log_message = f"Timestamp: {timestamp}, Query: {query}, Search scope: {search_scope}, Namespace: {namespace}, PDF Path: {pdf_path}, Department: {department}, Type of Document: {type_of_document}, Year: {year}, Answer: {answer}, Search Results: {search_results}"
+        log_message = f"Timestamp: {timestamp}, Query: {query}, Search scope: {search_scope}, Namespace: {namespace}, PDF Path: {pdf_path}, Answer: {answer}, Search Results: {search_results}"
         logger.info(log_message)
 
         if pdf_path:
@@ -92,7 +102,7 @@ def index():
 def result():
     query = session.get("query", "")
     answer = session.get("answer", "")
-    search_results = session.get("search_results", "")
+    search_results = session.get("search_results", [])
     return render_template(
         "results.html", query=query, answer=answer, search_results=search_results
     )

@@ -2,7 +2,7 @@ import os
 from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
 from urllib.parse import urlparse, quote
-from config import azure_form_key, azure_form_endpoint
+from .config import azure_form_key, azure_form_endpoint
 from spacy.lang.en import English
 import re
 import pandas as pd
@@ -44,9 +44,6 @@ def analyze_read(local_file_path):
     return pages
 
 
-file_path = "https://urban.rajasthan.gov.in/content/dam/raj/udh/udh%20department/pdf/Notifications/Adobe%20Scan%2010%20Sep%202021%20(7).pdf"
-
-
 nlp = English()  # Just the language with no model
 nlp.add_pipe("sentencizer")  # Adding a sentencizer pipeline component
 
@@ -86,6 +83,8 @@ def clean_and_split_text(text):
         else:
             cleaned_segments.append(segment)
     cleaned_segments = [segment for segment in cleaned_segments if segment.strip()]
+    total_chunks = len(cleaned_segments)
+    print(f"Total chunks: {total_chunks}")
     return cleaned_segments
 
 
@@ -103,6 +102,3 @@ def chunks(input):
     # Print the DataFrame
     print(df)
     return df
-
-
-chunks(file_path)
