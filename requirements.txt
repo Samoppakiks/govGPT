@@ -49,6 +49,7 @@ spacy==3.5.2
 spacy-legacy==3.0.12
 spacy-loggers==1.0.4
 srsly==2.4.6
+tenacity==8.2.2
 thinc==8.1.10
 tqdm==4.65.0
 typer==0.7.0

@@ -10,11 +10,12 @@ from .embedchat import (
 import requests
 import os
 import pandas as pd
-from .config import pinecone_api_key, pinecone_environment
+
+# from .config import pinecone_api_key, pinecone_environment
 from .extract import analyze_read, clean_and_split_text, chunks
 
-"""pinecone_api_key = os.environ.get("PINECONE_API_KEY")
-pinecone_environment = os.environ.get("PINECONE_ENV")"""
+pinecone_api_key = os.environ.get("PINECONE_API_KEY")
+pinecone_environment = os.environ.get("PINECONE_ENV")
 
 
 def get_pinecone_namespaces():

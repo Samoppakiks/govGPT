@@ -1,4 +1,4 @@
-from .config import openaiapi, openaiorg, pinecone_api_key, pinecone_environment
+# from .config import openaiapi, openaiorg, pinecone_api_key, pinecone_environment
 import os
 import openai
 import pinecone
@@ -8,27 +8,86 @@ import re
 import json
 import time
 from spacy.lang.en import English
+import pandas as pd
+from tenacity import retry, wait_random_exponential, stop_after_attempt
+import random
+import itertools
 
 
-"""openaiapi = os.environ.get("OPENAI_API_KEY")
+openaiapi = os.environ.get("OPENAI_API_KEY")
 openaiorg = os.environ.get("OPENAI_ORG_ID")
 pinecone_api_key = os.environ.get("PINECONE_API_KEY")
-pinecone_environment = os.environ.get("PINECONE_ENV")"""
+pinecone_environment = os.environ.get("PINECONE_ENV")
 
 openai.api_key = openaiapi
 openai.organization = openaiorg
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 
-def create_embeddings(chunk, model_engine="text-embedding-ada-002"):
-    response = openai.Embedding.create(input=[chunk], model=model_engine)
-    embedding = response["data"][0]["embedding"]
-    return embedding
+def create_embeddings(
+    df, model_engine="text-embedding-ada-002", batch_size=64, num_workers=8
+):
+    # Initialize OpenAI and Pinecone
+    # ...
+
+    # Prepare the texts and metadata
+    texts = df["Text Content"].tolist()
+    metadata_list = df.drop("Text Content", axis=1).to_dict("records")
+
+    # Function to create embeddings for a batch of texts
+    @retry(wait=wait_random_exponential(min=1, max=40), stop=stop_after_attempt(10))
+    def get_embeddings(input):
+        response = openai.Embedding.create(input=input, model=model_engine)
+        return [data["embedding"] for data in response["data"]]
+
+    # Function to split the texts into batches
+    def batchify(iterable, n=1):
+        l = len(iterable)
+        for ndx in range(0, l, n):
+            yield iterable[ndx : min(ndx + n, l)]
+
+    # Create the embeddings in parallel
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [
+            executor.submit(get_embeddings, text_batch)
+            for text_batch in batchify(texts, batch_size)
+        ]
+
+        embeddings = []
+        for future in tqdm(
+            concurrent.futures.as_completed(futures), total=len(futures)
+        ):
+            embeddings.extend(future.result())
+
+    # Combine the embeddings with the metadata
+    for i, metadata in enumerate(metadata_list):
+        metadata["text"] = df["Text Content"].iloc[i]
+        metadata_list[i] = (f"chunk_{i}", embeddings[i], metadata)
+
+    return metadata_list
 
 
-def upsert_embeddings(index, embeddings, namespace):
+def chunks(iterable, batch_size=100):
+    # A helper function to break an iterable into chunks of size batch_size
+    it = iter(iterable)
+    chunk = tuple(itertools.islice(it, batch_size))
+    while chunk:
+        yield chunk
+        chunk = tuple(itertools.islice(it, batch_size))
+
+
+def upsert_embeddings(index, embeddings, namespace, batch_size=100):
+    for i, batch in enumerate(chunks(embeddings, batch_size)):
+        index.upsert(vectors=batch, namespace=namespace)
+        print(f"Upserted {batch_size*(i+1)} embeddings")
+
+
+"""def upsert_embeddings(index, embeddings, namespace):
     for i, (chunk_id, embedding, metadata) in enumerate(embeddings):
         index.upsert(vectors=[(chunk_id, embedding, metadata)], namespace=namespace)
-        print(f"Upserted {i+1} embeddings")
+        print(f"Upserted {i+1} embeddings")"""
 
 
 def query_vector_database(query, namespace=None):
@@ -73,20 +132,9 @@ def process_extracted_text(
     index_name = "rajgov"
     index = pinecone.Index(index_name)
     # Your existing code...
-    embeddings = []
-    total_chunks = len(df)
-    for i, row in df.iterrows():
-        embedding = create_embeddings(row["Text Content"])
-        print(f"Created embedding for chunk {i}/{total_chunks}")
-        metadata = {
-            "text": row["Text Content"],
-            "department": row["Department"],
-            "type_of_document": row["Type of Document"],
-            "year": row["Year"],
-            "Title": row["Title"],
-            "Page Number": row["Page No"],
-        }
-        embeddings.append((f"chunk_{i}", embedding, metadata))
+    embeddings = create_embeddings(df)
+    print(f"Created embeddings for all chunks")
+
     namespace = df["Title"][0]
     df.to_csv(f"./extracted_texts/{namespace}_df.csv", index=False)
 
@@ -104,19 +152,19 @@ def chatgpt_summarize_results(query, results):  # focus_phrases)
     for match in results["results"][0]["matches"]:
         # Extract all the metadata information
         score = match["score"]
-        # title = match["metadata"]["Title"]
-        # page_number = match["metadata"]["Page Number"]
-        department = match["metadata"]["department"]
-        type_of_document = match["metadata"]["type_of_document"]
-        year = match["metadata"]["year"]
+        title = match["metadata"]["Title"]
+        page_number = match["metadata"]["Page No"]
+        department = match["metadata"]["Department"]
+        type_of_document = match["metadata"]["Type of Document"]
+        year = match["metadata"]["Year"]
         text = match["metadata"]["text"]
 
         # Append the result as a dictionary to the list
         search_results.append(
             {
                 "Score": score,
-                # "Page Number": page_number,
-                # "Title": title,
+                "Page Number": page_number,
+                "Title": title,
                 "Department": department,
                 "Type of Document": type_of_document,
                 "Year": year,
