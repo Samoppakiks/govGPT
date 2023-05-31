@@ -42,10 +42,10 @@ def create_directory_if_not_exists(directory):
 
 
 def add_metadata(df, filename, department=None, type_of_document=None, year=None):
-    df["Year"] = year
-    df["Department"] = department
-    df["Type of Document"] = type_of_document
-    df["Title"] = filename
+    df["year"] = year
+    df["department"] = department
+    df["type_of_document"] = type_of_document
+    # df["title"] = filename
     return df
 
 
