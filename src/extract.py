@@ -1,9 +1,8 @@
+# from .config import azure_form_key, azure_form_endpoint
 import os
 from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
 from urllib.parse import urlparse, quote
-
-# from .config import azure_form_key, azure_form_endpoint
 from spacy.lang.en import English
 import re
 import pandas as pd

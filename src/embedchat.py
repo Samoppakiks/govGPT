@@ -152,19 +152,23 @@ def chatgpt_summarize_results(query, results):  # focus_phrases)
     for match in results["results"][0]["matches"]:
         # Extract all the metadata information
         score = match["score"]
-        title = match["metadata"]["Title"]
-        page_number = match["metadata"]["Page No"]
-        department = match["metadata"]["Department"]
-        type_of_document = match["metadata"]["Type of Document"]
-        year = match["metadata"]["Year"]
+        # title = match["metadata"]["Title"] #uncomment for new docs
+        # page_number = match["metadata"]["Page No"] #uncomment for new docs
+        department = match["metadata"][
+            "department"
+        ]  # ["Department"] #uncomment and replace for new docs
+        type_of_document = match["metadata"][
+            "type_of_document"
+        ]  # ["Type of Document"] #uncomment and replace for new docs
+        year = match["metadata"]["year"]  # ["Year"] #uncomment for new docs
         text = match["metadata"]["text"]
 
         # Append the result as a dictionary to the list
         search_results.append(
             {
                 "Score": score,
-                "Page Number": page_number,
-                "Title": title,
+                # "Page Number": page_number,
+                # "Title": title,
                 "Department": department,
                 "Type of Document": type_of_document,
                 "Year": year,
