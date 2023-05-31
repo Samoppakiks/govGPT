@@ -45,7 +45,7 @@ def add_metadata(df, filename, department=None, type_of_document=None, year=None
     df["year"] = year
     df["department"] = department
     df["type_of_document"] = type_of_document
-    # df["title"] = filename
+    df["Title"] = filename
     return df
 
 
